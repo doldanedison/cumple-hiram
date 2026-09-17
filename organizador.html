@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Lista de invitados · Organizador</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .top{background:linear-gradient(135deg,#8fb0dc,#7f9cc9);color:#fff;padding:22px 18px 18px;border-radius:0 0 26px 26px}
+  .top h1{font-size:22px;font-weight:600}.top p{opacity:.9;font-size:14px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+  .stats div{background:#ffffff26;border-radius:14px;padding:8px;text-align:center}
+  .stats b{display:block;font-family:Fredoka;font-size:22px}.stats span{font-size:11px;opacity:.9}
+  .box{margin:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px}
+  .box h2{font-size:17px;color:var(--blue-d);margin-bottom:10px;font-weight:500}
+  .grid2{display:grid;grid-template-columns:1fr 110px;gap:10px}
+  .tabs{display:flex;gap:6px;margin:0 16px;overflow-x:auto}
+  .tabs button{flex:none;background:#fff;border:2px solid var(--line);border-radius:30px;padding:7px 13px;font-size:13px;color:var(--ink)}
+  .tabs button.on{border-color:var(--blue);background:#e8f0fa;color:var(--blue-d)}
+  .g{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .g:last-child{border:0}
+  .g .n{flex:1;min-width:0}.g .n b{display:block;font-weight:700;overflow-wrap:anywhere}.g .n small{color:var(--soft);font-size:12px}
+  .tag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap}
+  .PENDIENTE{background:#fff3cd;color:#8a6d1a}.CONFIRMADO{background:#e7f4e4;color:#4d7a45}.NO{background:#fde8ec;color:#a4475d}
+  .mini{background:#f4f7fc;border-radius:10px;width:34px;height:34px;font-size:16px}
+  .btn-sm{background:var(--blue);color:#fff;border-radius:14px;padding:12px;width:100%;font-family:Fredoka;font-size:16px;margin-top:10px}
+  .search{margin:12px 16px 0}
+  .muted{color:var(--soft);font-size:13px}
+  textarea.bulk{min-height:110px;font-size:15px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+const C = window.CUMPLE, $ = s => document.querySelector(s), app = $("#app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let clave = "", lista = [], filtro = "TODOS", texto = "";
+try { clave = sessionStorage.getItem("cumple_clave") || ""; } catch { }
+
+function login(msg = "") {
+  app.innerHTML = `
+    <div class="top"><h1>📋 Panel del organizador</h1><p>Cumple de ${esc(C.nombre)}</p></div>
+    <div class="box">
+      <h2>Ingresá la clave</h2>
+      ${API.demo() ? '<p class="msg inf">Modo demo: cualquier clave sirve y los datos quedan solo en este navegador.</p>' : ""}
+      <form id="lf"><input type="text" id="k" autocomplete="off" placeholder="Clave del organizador" required>
+      ${msg}<button class="btn-sm">Entrar</button></form>
+    </div>`;
+  $("#lf").onsubmit = async e => {
+    e.preventDefault(); clave = $("#k").value.trim();
+    try { await cargar(); try { sessionStorage.setItem("cumple_clave", clave); } catch { } }
+    catch (err) { clave = ""; login(`<div class="msg err">${esc(err.message)}</div>`); }
+  };
+}
+
+async function cargar() { lista = await API.listar(clave); render(); }
+
+function render() {
+  const conf = lista.filter(g => g.estado === "CONFIRMADO");
+  const lugares = lista.reduce((a, g) => a + +g.acompanantes + 1, 0);
+  const asisten = conf.reduce((a, g) => a + +g.asistiran, 0);
+  const pend = lista.filter(g => g.estado === "PENDIENTE").length;
+  const vis = lista.filter(g => (filtro === "TODOS" || g.estado === filtro) && (!texto || API.norm(g.nombre).includes(API.norm(texto))))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+  app.innerHTML = `
+    <div class="top">
+      <h1>📋 Invitados de ${esc(C.nombre.split(" ")[0])}</h1><p>${esc(C.fechaTexto)} · ${esc(C.lugar)}</p>
+      <div class="stats"><div><b>${lista.length}</b><span>invitaciones<br>${lugares} lugares</span></div>
+      <div><b>${asisten}</b><span>personas<br>confirmadas</span></div>
+      <div><b>${pend}</b><span>sin<br>responder</span></div></div>
+    </div>
+
+    <div class="box">
+      <h2 id="ft">Agregar invitado</h2>
+      <form id="af">
+        <input type="hidden" id="gid">
+        <label class="lbl">Nombre y apellido</label>
+        <input type="text" id="gn" required placeholder="Ej.: Juan Pérez">
+        <div class="grid2" style="margin-top:10px">
+          <div><label class="lbl">Teléfono (opcional)</label><input type="tel" id="gt" placeholder="0981…"></div>
+          <div><label class="lbl">Acompañantes</label><input type="number" id="ga" min="0" max="20" value="0" required></div>
+        </div>
+        <button class="btn-sm" id="sv">Guardar</button>
+        <button type="button" class="link" id="cx" hidden>Cancelar edición</button>
+      </form>
+      <details style="margin-top:12px"><summary class="muted">Cargar varios de una vez</summary>
+        <p class="muted" style="margin:8px 0">Uno por línea: <b>Nombre Apellido, acompañantes</b></p>
+        <textarea class="bulk" id="bulk" placeholder="María González, 2&#10;Carlos Benítez, 0&#10;Familia Rojas Díaz, 3"></textarea>
+        <button class="btn-sm" id="bk">Agregar todos</button>
+      </details>
+    </div>
+
+    <div class="tabs">${["TODOS", "PENDIENTE", "CONFIRMADO", "NO ASISTE"].map(f => `<button data-f="${f}" class="${f === filtro ? "on" : ""}">${f[0] + f.slice(1).toLowerCase()}</button>`).join("")}
+      <button id="rf">↻ Actualizar</button></div>
+    <div class="search"><input type="text" id="se" placeholder="Buscar en la lista…" value="${esc(texto)}"></div>
+    <div class="box" style="padding:4px 16px">
+      ${vis.length ? vis.map(g => `
+        <div class="g">
+          <div class="n"><b>${esc(g.nombre)}</b>
+            <small>+${g.acompanantes} acomp. · ${g.estado === "CONFIRMADO" ? `vienen ${g.asistiran} de ${+g.acompanantes + 1}` : `${+g.acompanantes + 1} lugares`}${g.telefono ? " · " + esc(g.telefono) : ""}</small>
+            ${g.mensaje ? `<small style="display:block">💬 ${esc(g.mensaje)}</small>` : ""}
+          </div>
+          <span class="tag ${g.estado.split(" ")[0]}">${g.estado}</span>
+          <button class="mini" data-e="${esc(g.id)}" title="Editar">✎</button>
+          <button class="mini" data-d="${esc(g.id)}" title="Borrar">🗑</button>
+        </div>`).join("") : '<p class="muted" style="padding:14px 0">No hay invitados para mostrar.</p>'}
+    </div>
+    <div style="padding:0 16px 30px"><button class="btn-sm" id="csv" style="background:#fff;color:var(--blue-d);border:2px solid var(--blue)">⬇ Descargar lista (CSV)</button>
+    <button class="link" id="out">Salir</button></div>`;
+
+  $("#af").onsubmit = async e => {
+    e.preventDefault(); $("#sv").disabled = true;
+    try {
+      await API.guardar(clave, { id: $("#gid").value, nombre: $("#gn").value.trim().replace(/\s+/g, " "), acompanantes: Math.max(0, +$("#ga").value || 0), telefono: $("#gt").value.trim() });
+      await cargar();
+    } catch (err) { alert(err.message); $("#sv").disabled = false; }
+  };
+  $("#bk").onclick = async () => {
+    const rows = $("#bulk").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => {
+      const m = l.match(/^(.*?)[,;\t]\s*(\d+)\s*$/);
+      return m ? { nombre: m[1].trim(), acompanantes: +m[2] } : { nombre: l, acompanantes: 0 };
+    });
+    if (!rows.length) return;
+    $("#bk").disabled = true; $("#bk").textContent = "Guardando…";
+    try { for (const r of rows) await API.guardar(clave, r); await cargar(); }
+    catch (err) { alert(err.message); await cargar(); }
+  };
+  app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { filtro = b.dataset.f; render(); });
+  $("#rf").onclick = cargar;
+  $("#se").oninput = e => { texto = e.target.value; const p = e.target.selectionStart; render(); const s = $("#se"); s.focus(); s.setSelectionRange(p, p); };
+  app.querySelectorAll("[data-e]").forEach(b => b.onclick = () => {
+    const g = lista.find(x => x.id === b.dataset.e);
+    $("#gid").value = g.id; $("#gn").value = g.nombre; $("#ga").value = g.acompanantes; $("#gt").value = g.telefono || "";
+    $("#ft").textContent = "Editar invitado"; $("#cx").hidden = false;
+    if (g.estado !== "PENDIENTE") $("#cx").insertAdjacentHTML("afterend", `<button type="button" class="link" id="rs">Borrar su respuesta (volver a pendiente)</button>`);
+    $("#rs") && ($("#rs").onclick = async () => { await API.reiniciar(clave, g.id); cargar(); });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  $("#cx").onclick = render;
+  app.querySelectorAll("[data-d]").forEach(b => b.onclick = async () => {
+    const g = lista.find(x => x.id === b.dataset.d);
+    if (!confirm(`¿Borrar a ${g.nombre} de la lista?`)) return;
+    await API.borrar(clave, g.id); cargar();
+  });
+  $("#csv").onclick = () => {
+    const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = "﻿Nombre;Teléfono;Acompañantes;Lugares;Asistirán;Estado;Mensaje;Actualizado\n" +
+      lista.map(g => [g.nombre, g.telefono, g.acompanantes, +g.acompanantes + 1, g.asistiran, g.estado, g.mensaje, g.actualizado].map(q).join(";")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = "invitados-hiram.csv"; a.click();
+  };
+  $("#out").onclick = () => { try { sessionStorage.removeItem("cumple_clave"); } catch { } clave = ""; login(); };
+}
+
+clave ? cargar().catch(() => login()) : login();
+</script>
+</body>
+</html>

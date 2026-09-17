@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cumple de Hiram Ezequiel</title>
+<meta name="description" content="Te invito a celebrar mi 1 añito · Sábado 10 de octubre · 15:00 a 18:00 hs">
+<meta property="og:title" content="🌈 Hiram Ezequiel cumple 1 añito">
+<meta property="og:description" content="Sábado 10 de octubre · 15:00 a 18:00 hs · Aso Vierci. ¡Confirmá tu asistencia!">
+<meta name="theme-color" content="#dcebf8">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Fredoka:wght@400;500;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- PRESENTACIÓN -->
+<div id="intro">
+  <div class="stage" id="stage">
+    <div class="tap" id="tap"><button id="startBtn">🎈 Abrir invitación</button></div>
+  </div>
+</div>
+
+<div class="wrap" id="main">
+  <section class="hero" id="hero">
+    <div class="name">
+      <div class="pre">Te invito a celebrar</div>
+      <h1 id="nm"></h1>
+      <div class="ribbon" id="ed"></div>
+    </div>
+  </section>
+
+  <p class="intro-txt reveal">Con mucha alegría te invito a subir al <b>Arca de Noé</b> para festejar juntos mi primer añito 🐘🦒🦁</p>
+
+  <div class="cal reveal">
+    <div><b>10</b><span>día</span></div>
+    <div><b>10</b><span>mes</span></div>
+    <div><b>26</b><span>año</span></div>
+  </div>
+  <div class="countdown reveal" id="cd"></div>
+
+  <div class="info reveal">
+    <div class="row">
+      <div class="ico" style="background:#fde8ec"><svg viewBox="0 0 24 24" fill="none" stroke="#d7849a" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
+      <div><small>Fecha</small><strong id="fx"></strong></div>
+    </div>
+    <div class="row">
+      <div class="ico" style="background:#e8f0fa"><svg viewBox="0 0 24 24" fill="none" stroke="#7f9cc9" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+      <div><small>Horario</small><strong id="hx"></strong></div>
+    </div>
+    <div class="row">
+      <div class="ico" style="background:#e7f4e4"><svg viewBox="0 0 24 24" fill="none" stroke="#7fae76" stroke-width="2" stroke-linecap="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+      <div><small>Lugar</small><strong id="lx"></strong><p id="cx"></p></div>
+    </div>
+  </div>
+
+  <a class="btn btn-map reveal" id="mapBtn" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+    Ver ubicación en Google Maps
+  </a>
+  <button class="btn btn-rsvp reveal" id="rsvpBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+    Confirmar asistencia
+  </button>
+  <p class="theme reveal">🌈 Temática: El Arca de Noé en colores pastel</p>
+
+  <div class="footer-art" id="foot"></div>
+</div>
+
+<!-- HOJA DE CONFIRMACIÓN -->
+<div class="sheet-bg" id="bg"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <div id="sheetBody"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="art.js"></script>
+<script src="api.js"></script>
+<script>
+const C = window.CUMPLE, $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// ---------- datos en la página ----------
+$("#nm").textContent = C.nombre; $("#ed").textContent = C.edad;
+$("#fx").textContent = C.fechaTexto; $("#hx").textContent = C.horario;
+$("#lx").textContent = C.lugar; $("#cx").textContent = C.ciudad;
+$("#mapBtn").href = C.mapa;
+if (API.demo()) document.body.insertAdjacentHTML("beforeend", '<div class="demo-badge">Modo demo · sin conexión a la planilla</div>');
+
+$("#hero").insertAdjacentHTML("afterbegin", ART.svg(`
+  <rect width="400" height="330" fill="#fdf8f1"/>
+  ${ART.star(40, 40)}${ART.star(360, 60, .8, "#b9d6f0")}${ART.star(330, 20, .5)}
+  ${ART.rainbow(200, 190, 150, 13)}${ART.cloud(62, 190, 1.05)}${ART.cloud(338, 190, 1.05)}
+  <g class="a-float">${ART.balloon(46, 70, "#b9d6f0", .8)}${ART.balloon(84, 56, "#f9d8a8", .85)}</g>
+  <g class="a-fly">${ART.dove(320, 80, .8)}</g>`, "0 0 400 330"));
+
+$("#foot").innerHTML = ART.svg(`<rect width="400" height="170" fill="#fdf8f1"/>
+  <g class="a-boat">${ART.ark(180, 110, .55)}</g>${ART.noah(330, 60, .5)}${ART.waves(120)}`, "0 0 400 170");
+
+// ---------- cuenta regresiva ----------
+function tick() {
+  const d = new Date(C.fechaISO) - new Date();
+  if (d <= 0) { $("#cd").innerHTML = "🎉 ¡Hoy es el gran día!"; return; }
+  const dd = Math.floor(d / 864e5), hh = Math.floor(d / 36e5) % 24;
+  $("#cd").innerHTML = `Faltan <b>${dd}</b> días y <b>${hh}</b> horas`;
+}
+tick(); setInterval(tick, 60000);
+
+// ---------- presentación ----------
+const caps = [
+  ["¡Hay fiesta en el Arca!", ""],
+  ["Los animalitos", "van llegando…"],
+  ["", C.nombre],
+  [C.edad, "¡a celebrar!"]
+];
+const stage = $("#stage");
+ART.slides.forEach((s, i) => stage.insertAdjacentHTML("beforeend",
+  `<div class="slide">${s}<div class="cap"><div class="t1">${esc(caps[i][0])}</div><div class="t2">${esc(caps[i][1])}</div></div></div>`));
+stage.insertAdjacentHTML("beforeend", `<div class="dots">${ART.slides.map(() => "<i></i>").join("")}</div><button class="skip" id="skip">Saltar ›</button>`);
+const slides = [...stage.querySelectorAll(".slide")], dots = [...stage.querySelectorAll(".dots i")];
+let cur = -1, timer;
+
+function show(i) {
+  slides.forEach((s, k) => {
+    s.classList.toggle("on", k === i);
+    if (k === i) s.querySelectorAll("svg").forEach(v => { v.style.animation = "none"; v.offsetHeight; v.style.animation = ""; });
+  });
+  dots.forEach((d, k) => d.classList.toggle("on", k === i));
+}
+function next() {
+  cur++;
+  if (cur >= slides.length) return endIntro();
+  show(cur); timer = setTimeout(next, 3600);
+}
+function endIntro() {
+  clearTimeout(timer);
+  $("#intro").classList.add("fade");
+  setTimeout(() => $("#intro").remove(), 850);
+  reveal();
+}
+// Primera diapositiva de fondo con botón para "abrir" (permite ver la animación completa)
+show(0);
+$("#startBtn").onclick = () => { $("#tap").remove(); cur = 0; show(0); timer = setTimeout(next, 3600); };
+$("#skip").onclick = endIntro;
+if (location.hash === "#info") { endIntro(); document.querySelectorAll(".reveal").forEach(el => el.classList.add("in")); }
+
+function reveal() {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .15 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+}
+
+// ---------- confirmación ----------
+const body = $("#sheetBody");
+const open = () => { $("#bg").classList.add("on"); $("#sheet").classList.add("on"); };
+const close = () => { $("#bg").classList.remove("on"); $("#sheet").classList.remove("on"); };
+$("#bg").onclick = close;
+$("#rsvpBtn").onclick = () => { stepBuscar(); open(); };
+
+function stepBuscar(msg) {
+  body.innerHTML = `
+    <h2>Confirmar asistencia</h2>
+    <p class="sub">Escribí tu nombre y apellido tal como te conoce la familia</p>
+    <form id="f">
+      <label class="lbl" for="q">Nombre y apellido</label>
+      <input type="text" id="q" autocomplete="name" placeholder="Ej.: María González" required minlength="3">
+      ${msg || ""}
+      <button class="btn btn-rsvp" style="width:100%;margin:16px 0 0" id="go">Buscar mi invitación</button>
+    </form>
+    <button class="link" type="button" id="cl">Cerrar</button>`;
+  $("#cl").onclick = close;
+  setTimeout(() => $("#q").focus(), 350);
+  $("#f").onsubmit = async e => {
+    e.preventDefault();
+    const q = $("#q").value.trim();
+    if (API.norm(q).split(" ").length < 2) {
+      return stepBuscar(`<div class="msg err">Por favor escribí tu <b>nombre y apellido</b>.</div>`);
+    }
+    $("#go").innerHTML = '<span class="spin"></span> Buscando…'; $("#go").disabled = true;
+    try {
+      const r = await API.buscar(q);
+      if (!r.length) return stepBuscar(`<div class="msg err">No encontramos <b>${esc(q)}</b> en la lista de invitados. Revisá cómo lo escribiste o consultá con la familia de ${esc(C.nombre.split(" ")[0])} 💙</div>`);
+      if (r.length === 1) return stepConfirmar(r[0]);
+      body.innerHTML = `<h2>¿Cuál sos vos?</h2><p class="sub">Encontramos más de una coincidencia</p>
+        ${r.map((g, i) => `<button class="pick" data-i="${i}">${esc(g.nombre)}</button>`).join("")}
+        <button class="link" id="bk">Volver</button>`;
+      body.querySelectorAll(".pick").forEach(b => b.onclick = () => stepConfirmar(r[+b.dataset.i]));
+      $("#bk").onclick = () => stepBuscar();
+    } catch (err) {
+      stepBuscar(`<div class="msg err">No pudimos conectar. Probá de nuevo en un momento.</div>`);
+    }
+  };
+}
+
+function stepConfirmar(g) {
+  const max = +g.acompanantes + 1;
+  let n = g.estado === "PENDIENTE" || !g.asistiran ? max : +g.asistiran;
+  const prev = g.estado === "CONFIRMADO" ? `<div class="msg inf">Ya habías confirmado <b>${g.asistiran}</b> ${g.asistiran == 1 ? "persona" : "personas"}. Podés modificarlo.</div>`
+    : g.estado === "NO ASISTE" ? `<div class="msg inf">Habías indicado que no podías asistir. Podés cambiarlo.</div>` : "";
+  body.innerHTML = `
+    <div class="guest-card">
+      <div class="gn">¡Hola, ${esc(g.nombre)}! 🎈</div>
+      <p>${+g.acompanantes > 0
+        ? `Tu invitación incluye <b>${g.acompanantes}</b> ${g.acompanantes == 1 ? "acompañante" : "acompañantes"}<br>(${max} lugares en total)`
+        : "Tu invitación es <b>personal</b> (1 lugar)"}</p>
+    </div>
+    ${prev}
+    ${max > 1 ? `
+      <label class="lbl" style="text-align:center">¿Cuántos asistirán? (vos incluido/a)</label>
+      <div class="chips"><button id="all">Todos (${max})</button><button id="only">Solo yo</button></div>
+      <div class="stepper"><button id="mn" aria-label="Menos">−</button><output id="nv">${n}</output><button id="pl" aria-label="Más">+</button></div>
+      <p class="hint">de ${max} lugares</p>` : ""}
+    <label class="lbl" for="ms" style="margin-top:16px">Mensaje para ${esc(C.nombre.split(" ")[0])} (opcional)</label>
+    <textarea id="ms" rows="2" maxlength="200" placeholder="¡Feliz primer añito!"></textarea>
+    <button class="btn btn-rsvp" style="width:100%;margin:16px 0 0" id="ok">✓ Confirmar asistencia</button>
+    <button class="link" id="no">No podré asistir</button>
+    <button class="link" id="bk">Volver</button>`;
+  const upd = () => {
+    if (max <= 1) return;
+    $("#nv").textContent = n; $("#mn").disabled = n <= 1; $("#pl").disabled = n >= max;
+    $("#all").classList.toggle("on", n === max); $("#only").classList.toggle("on", n === 1);
+  };
+  if (max > 1) {
+    $("#mn").onclick = () => { n = Math.max(1, n - 1); upd(); };
+    $("#pl").onclick = () => { n = Math.min(max, n + 1); upd(); };
+    $("#all").onclick = () => { n = max; upd(); };
+    $("#only").onclick = () => { n = 1; upd(); };
+    upd();
+  }
+  $("#bk").onclick = () => stepBuscar();
+  const send = async (cant, btn) => {
+    btn.disabled = true; const t = btn.innerHTML; btn.innerHTML = '<span class="spin"></span> Enviando…';
+    try {
+      await API.confirmar(g.id, cant, $("#ms").value.trim());
+      stepListo(g, cant);
+    } catch (e) {
+      btn.disabled = false; btn.innerHTML = t;
+      body.insertAdjacentHTML("afterbegin", `<div class="msg err">No se pudo guardar. Intentá de nuevo.</div>`);
+    }
+  };
+  $("#ok").onclick = e => send(max > 1 ? n : 1, e.currentTarget);
+  $("#no").onclick = e => { if (confirm("¿Confirmás que no podrás asistir?")) send(0, e.currentTarget); };
+}
+
+function stepListo(g, cant) {
+  body.innerHTML = cant > 0 ? `
+    <div class="big-ok">🎉</div>
+    <h2>¡Gracias, ${esc(g.nombre.split(" ")[0])}!</h2>
+    <p class="sub">Confirmaste <b>${cant}</b> ${cant == 1 ? "lugar" : "lugares"}.<br>Te esperamos el <b>${esc(C.fechaTexto)}</b>, ${esc(C.horario.toLowerCase())}, en ${esc(C.lugar)}.</p>
+    <a class="btn btn-map" style="width:100%;margin:0" href="${C.mapa}" target="_blank" rel="noopener">📍 Cómo llegar</a>
+    <button class="link" id="cl">Cerrar</button>` : `
+    <div class="big-ok">💙</div>
+    <h2>¡Gracias por avisar!</h2>
+    <p class="sub">Te vamos a extrañar. Si cambian tus planes, podés volver a confirmar desde esta misma página.</p>
+    <button class="link" id="cl">Cerrar</button>`;
+  $("#cl").onclick = close;
+  if (cant > 0) confetti();
+}
+
+function confetti() {
+  const cols = ["#f4b6c2", "#f9d8a8", "#f6eea8", "#c7e5c0", "#b9d6f0", "#cfc2ec"];
+  for (let i = 0; i < 70; i++) {
+    const c = document.createElement("i"); c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw"; c.style.background = cols[i % cols.length];
+    c.style.animationDuration = 2 + Math.random() * 2 + "s"; c.style.animationDelay = Math.random() * .6 + "s";
+    document.body.appendChild(c); setTimeout(() => c.remove(), 5000);
+  }
+}
+</script>
+</body>
+</html>
