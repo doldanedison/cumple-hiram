@@ -118,3 +118,10 @@ input:focus,textarea:focus{border-color:var(--blue)}
 @keyframes sp{to{transform:rotate(360deg)}}
 .confetti{position:fixed;top:-10px;width:9px;height:14px;z-index:70;pointer-events:none;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+.cal{gap:8px;padding:0 12px}
+.cal div{width:74px;padding:13px 2px 7px}
+.cal b{font-size:30px}
+.cal span{font-family:"Quicksand";font-weight:700;font-size:12px;letter-spacing:.5px}
+.countdown{font-family:"Dancing Script";font-size:24px;color:#c98a6a;margin:18px 0 0}
+.mute{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:55;width:34px;height:34px;border-radius:50%;background:#ffffffb3;color:var(--blue-d);font-size:16px;opacity:.55;box-shadow:0 1px 6px #0001;backdrop-filter:blur(4px)}
+.mute.off{text-decoration:line-through;opacity:.4}

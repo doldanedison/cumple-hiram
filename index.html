@@ -33,12 +33,13 @@
 
   <p class="intro-txt reveal">Con mucha alegría te invito a subir al <b>Arca de Noé</b> para festejar juntos mi primer añito 🐘🦒🦁</p>
 
-  <div class="cal reveal">
-    <div><b>10</b><span>día</span></div>
-    <div><b>10</b><span>mes</span></div>
-    <div><b>26</b><span>año</span></div>
+  <p class="countdown reveal" id="cdt">Falta muy poquito</p>
+  <div class="cal reveal" id="cd">
+    <div><b id="cdD">0</b><span>días</span></div>
+    <div><b id="cdH">0</b><span>horas</span></div>
+    <div><b id="cdM">0</b><span>min</span></div>
+    <div><b id="cdS">0</b><span>seg</span></div>
   </div>
-  <div class="countdown reveal" id="cd"></div>
 
   <div class="info reveal">
     <div class="row">
@@ -102,11 +103,23 @@ $("#foot").innerHTML = ART.svg(`<rect width="400" height="170" fill="#fdf8f1"/>
 // ---------- cuenta regresiva ----------
 function tick() {
   const d = new Date(C.fechaISO) - new Date();
-  if (d <= 0) { $("#cd").innerHTML = "🎉 ¡Hoy es el gran día!"; return; }
-  const dd = Math.floor(d / 864e5), hh = Math.floor(d / 36e5) % 24;
-  $("#cd").innerHTML = `Faltan <b>${dd}</b> días y <b>${hh}</b> horas`;
+  if (d <= 0) { $("#cdt").textContent = "🎉 ¡Hoy es el gran día!"; $("#cd").style.display = "none"; return; }
+  const p = n => String(n).padStart(2, "0");
+  $("#cdD").textContent = Math.floor(d / 864e5);
+  $("#cdH").textContent = p(Math.floor(d / 36e5) % 24);
+  $("#cdM").textContent = p(Math.floor(d / 6e4) % 60);
+  $("#cdS").textContent = p(Math.floor(d / 1e3) % 60);
 }
-tick(); setInterval(tick, 60000);
+tick(); setInterval(tick, 1000);
+
+// ---------- música ----------
+const bgm = new Audio("musica.mp3");
+bgm.loop = true; bgm.volume = .7;
+document.body.insertAdjacentHTML("beforeend", '<button class="mute" id="mute" aria-label="Silenciar música" hidden>♪</button>');
+const muteBtn = $("#mute");
+const playMusic = () => bgm.play().then(() => { muteBtn.hidden = false; }).catch(() => { });
+muteBtn.onclick = () => { bgm.muted = !bgm.muted; muteBtn.classList.toggle("off", bgm.muted); muteBtn.setAttribute("aria-label", bgm.muted ? "Activar música" : "Silenciar música"); };
+document.addEventListener("pointerdown", function once() { if (bgm.paused && !bgm.muted) playMusic(); document.removeEventListener("pointerdown", once); });
 
 // ---------- presentación ----------
 const caps = [
@@ -142,7 +155,7 @@ function endIntro() {
 }
 // Primera diapositiva de fondo con botón para "abrir" (permite ver la animación completa)
 show(0);
-$("#startBtn").onclick = () => { $("#tap").remove(); cur = 0; show(0); timer = setTimeout(next, 3600); };
+$("#startBtn").onclick = () => { playMusic(); $("#tap").remove(); cur = 0; show(0); timer = setTimeout(next, 3600); };
 $("#skip").onclick = endIntro;
 if (location.hash === "#info") { endIntro(); document.querySelectorAll(".reveal").forEach(el => el.classList.add("in")); }
 
