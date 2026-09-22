@@ -59,7 +59,7 @@ function norm(s) {
 
 function buscar(nombre) {
   const b = norm(nombre).split(" ").filter(Boolean);
-  if (b.length < 2) throw new Error("Escribí nombre y apellido");
+  if (!b.length) throw new Error("Escribí tu nombre");
   return leer().filter(r => { const a = norm(r.obj.nombre).split(" "); return b.every(x => a.indexOf(x) >= 0); })
     .slice(0, 5)
     .map(r => ({ id: r.obj.id, nombre: r.obj.nombre, acompanantes: r.obj.acompanantes, asistiran: r.obj.asistiran, estado: r.obj.estado }));

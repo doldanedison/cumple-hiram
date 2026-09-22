@@ -173,10 +173,10 @@ $("#rsvpBtn").onclick = () => { stepBuscar(); open(); };
 function stepBuscar(msg) {
   body.innerHTML = `
     <h2>Confirmar asistencia</h2>
-    <p class="sub">Escribí tu nombre y apellido tal como te conoce la familia</p>
+    <p class="sub">Escribí tu nombre tal como te conoce la familia</p>
     <form id="f">
-      <label class="lbl" for="q">Nombre y apellido</label>
-      <input type="text" id="q" autocomplete="name" placeholder="Ej.: María González" required minlength="3">
+      <label class="lbl" for="q">Tu nombre</label>
+      <input type="text" id="q" autocomplete="name" placeholder="Ej.: María o María González" required minlength="3">
       ${msg || ""}
       <button class="btn btn-rsvp" style="width:100%;margin:16px 0 0" id="go">Buscar mi invitación</button>
     </form>
@@ -186,8 +186,8 @@ function stepBuscar(msg) {
   $("#f").onsubmit = async e => {
     e.preventDefault();
     const q = $("#q").value.trim();
-    if (API.norm(q).split(" ").length < 2) {
-      return stepBuscar(`<div class="msg err">Por favor escribí tu <b>nombre y apellido</b>.</div>`);
+    if (!API.norm(q)) {
+      return stepBuscar(`<div class="msg err">Por favor escribí tu <b>nombre</b>.</div>`);
     }
     $("#go").innerHTML = '<span class="spin"></span> Buscando…'; $("#go").disabled = true;
     try {
