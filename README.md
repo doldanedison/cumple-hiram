@@ -8,6 +8,7 @@
 | `index.html` | Lo que ven los invitados |
 | `organizador.html` | Panel para cargar invitados y ver quién confirmó (pide clave) |
 | `config.js` | Datos del cumple y URL de la planilla |
+| `musica.mp3` | Música de fondo (arranca al abrir la invitación, en bucle) |
 | `Code.gs` | Backend gratis en Google Sheets |
 
 ## Conectar la planilla de Google
@@ -26,5 +27,5 @@ Sin `API_URL` la página anda en **modo demo** (los datos quedan solo en ese nav
 ## Uso
 
 - **Organizador**: cargá cada invitación con su cantidad de acompañantes (el invitado cuenta aparte: "Familia Rojas, 3" = 4 lugares).
-- **Invitados**: tocan *Confirmar asistencia*, escriben nombre y apellido y eligen cuántos van.
+- **Invitados**: tocan *Confirmar asistencia*, escriben su nombre (alcanza el nombre solo; si hay varios parecidos la página los deja elegir) y eligen cuántos van.
 - `index.html#info` abre directo la invitación, sin la presentación.
