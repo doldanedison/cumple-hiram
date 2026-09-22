@@ -191,7 +191,9 @@ function stepBuscar(msg) {
     }
     $("#go").innerHTML = '<span class="spin"></span> Buscando…'; $("#go").disabled = true;
     try {
-      const r = await API.buscar(q);
+      // el backend pide 2 palabras; si escriben un solo nombre lo mandamos duplicado
+      const qs = API.norm(q).split(" ").filter(Boolean).length < 2 ? q + " " + q : q;
+      const r = await API.buscar(qs);
       if (!r.length) return stepBuscar(`<div class="msg err">No encontramos <b>${esc(q)}</b> en la lista de invitados. Revisá cómo lo escribiste o consultá con la familia de ${esc(C.nombre.split(" ")[0])} 💙</div>`);
       if (r.length === 1) return stepConfirmar(r[0]);
       body.innerHTML = `<h2>¿Cuál sos vos?</h2><p class="sub">Encontramos más de una coincidencia</p>
