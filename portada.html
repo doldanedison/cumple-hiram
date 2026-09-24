@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Portada</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Fredoka:wght@400;500;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#fff}
+  #card{position:relative;width:1200px;height:630px;overflow:hidden}
+  #card svg{position:absolute;inset:0;width:1200px;height:630px}
+  .txt{position:absolute;left:0;right:0;top:158px;text-align:center}
+  .pre{font-family:"Fredoka";font-size:38px;color:#7a8095;letter-spacing:.5px;text-shadow:0 2px 0 #fff,0 0 18px #fff,0 0 18px #fff}
+  h1{font-family:"Dancing Script";font-weight:700;font-size:88px;line-height:1.02;letter-spacing:2px;color:#5c79a8;text-shadow:0 4px 0 #fff,0 0 22px #fff;margin-top:6px}
+  .rib{display:inline-block;margin-top:26px;background:#f1dcc0;color:#9a6c47;padding:12px 54px;font-family:"Fredoka";font-size:34px;border-radius:6px;position:relative}
+</style>
+</head>
+<body>
+<div id="card">
+  <div id="art"></div>
+  <div class="txt">
+    <div class="pre">Te invito a celebrar mi 1 añito</div>
+    <h1>HIRAM EZEQUIEL</h1>
+    <div class="rib">Sábado 10 de octubre · 15:00 hs</div>
+  </div>
+</div>
+<script src="art.js"></script>
+<script>
+const A = ART;
+// olas al ancho completo (A.waves solo cubre 400px)
+const olas = y => {
+  const t = "t50 0 ".repeat(25);
+  return `<path d="M-20 ${y} q25 -18 50 0 ${t}V630 H-20Z" fill="#b9d6f0"/>
+    <path d="M-40 ${y + 20} q25 -16 50 0 ${t}V630 H-40Z" fill="#9cc3e6" opacity=".85"/>`;
+};
+document.getElementById("art").innerHTML =
+`<svg viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#dcebf8"/><stop offset="1" stop-color="#fdf8f1"/></linearGradient></defs>
+  <rect width="1200" height="630" fill="url(#sky2)"/>
+  ${A.star(150, 90)}${A.star(1060, 120, .9)}${A.star(980, 60, .7, "#b9d6f0")}${A.star(250, 170, .6, "#b9d6f0")}
+  ${A.rainbow(600, 520, 340, 30)}
+  ${A.cloud(150, 505, 2.1)}${A.cloud(1050, 505, 2.1)}
+  ${A.balloon(105, 245, "#b9d6f0", 1.8)}${A.balloon(200, 180, "#f9d8a8", 1.6)}
+  ${A.dove(1015, 200, 1.9)}
+  ${olas(555)}
+  ${A.ark(600, 515, .95)}
+  ${olas(585)}
+</svg>`;
+document.fonts.ready.then(() => document.body.setAttribute("data-listo", "1"));
+</script>
+</body>
+</html>

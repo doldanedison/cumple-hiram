@@ -9,6 +9,8 @@
 | `organizador.html` | Panel para cargar invitados y ver quién confirmó (pide clave) |
 | `config.js` | Datos del cumple y URL de la planilla |
 | `musica.mp3` | Música de fondo (arranca al abrir la invitación, en bucle) |
+| `portada.jpg` | Imagen de la vista previa al compartir el enlace (WhatsApp, etc.) |
+| `portada.html` | Plantilla con la que se genera `portada.jpg` (1200x630) |
 | `Code.gs` | Backend gratis en Google Sheets |
 
 ## Conectar la planilla de Google
