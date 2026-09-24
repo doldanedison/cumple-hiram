@@ -183,6 +183,27 @@ const close = () => { $("#bg").classList.remove("on"); $("#sheet").classList.rem
 $("#bg").onclick = close;
 $("#rsvpBtn").onclick = () => { stepBuscar(); open(); };
 
+// Busca por cada palabra por separado y junta los resultados, para que
+// "Hebert Veron" encuentre a "Hebert" aunque en la lista no esté el apellido.
+// (El backend exige 2 palabras y las combina con Y, por eso se manda duplicada.)
+async function buscarCoincidencias(q) {
+  const todas = API.norm(q).split(" ").filter(Boolean);
+  const largas = todas.filter(t => t.length >= 3);
+  const palabras = [...new Set(largas.length ? largas : todas)].slice(0, 4);
+  const listas = await Promise.all(palabras.map(t => API.buscar(t + " " + t).catch(() => [])));
+  const puntos = new Map();
+  listas.forEach(lista => lista.forEach(g => {
+    const p = puntos.get(g.id);
+    if (p) p.n++; else puntos.set(g.id, { g, n: 1 });
+  }));
+  // primero los que más palabras coinciden y, a igualdad, el nombre más parecido
+  // ("Hebert" antes que "Christian Verón" cuando se busca "Hebert Verón")
+  const prop = g => puntos.get(g.id).n / API.norm(g.nombre).split(" ").filter(Boolean).length;
+  return [...puntos.values()]
+    .sort((a, b) => b.n - a.n || prop(b.g) - prop(a.g) || a.g.nombre.localeCompare(b.g.nombre))
+    .slice(0, 8).map(x => x.g);
+}
+
 function stepBuscar(msg) {
   body.innerHTML = `
     <h2>Confirmar asistencia</h2>
@@ -204,13 +225,11 @@ function stepBuscar(msg) {
     }
     $("#go").innerHTML = '<span class="spin"></span> Buscando…'; $("#go").disabled = true;
     try {
-      // el backend pide 2 palabras; si escriben un solo nombre lo mandamos duplicado
-      const qs = API.norm(q).split(" ").filter(Boolean).length < 2 ? q + " " + q : q;
-      const r = await API.buscar(qs);
+      const r = await buscarCoincidencias(q);
       if (!r.length) return stepBuscar(`<div class="msg err">No encontramos <b>${esc(q)}</b> en la lista de invitados. Revisá cómo lo escribiste o consultá con la familia de ${esc(C.nombre.split(" ")[0])} 💙</div>`);
       if (r.length === 1) return stepConfirmar(r[0]);
-      body.innerHTML = `<h2>¿Cuál sos vos?</h2><p class="sub">Encontramos más de una coincidencia</p>
-        ${r.map((g, i) => `<button class="pick" data-i="${i}">${esc(g.nombre)}</button>`).join("")}
+      body.innerHTML = `<h2>¿Cuál sos vos?</h2><p class="sub">Tocá tu nombre en la lista</p>
+        ${r.map((g, i) => `<button class="pick" data-i="${i}">${esc(g.nombre)}<small style="display:block;color:var(--soft);font-size:13px">${+g.acompanantes + 1} ${+g.acompanantes ? "lugares" : "lugar"}</small></button>`).join("")}
         <button class="link" id="bk">Volver</button>`;
       body.querySelectorAll(".pick").forEach(b => b.onclick = () => stepConfirmar(r[+b.dataset.i]));
       $("#bk").onclick = () => stepBuscar();
