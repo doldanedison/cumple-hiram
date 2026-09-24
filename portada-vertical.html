@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Portada vertical</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Fredoka:wght@400;500;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  #card{position:relative;width:1080px;height:1350px;overflow:hidden}
+  #card svg{position:absolute;inset:0;width:1080px;height:1350px}
+  .txt{position:absolute;left:0;right:0;top:250px;text-align:center}
+  .pre{font-family:"Fredoka";font-size:40px;color:#7a8095;letter-spacing:.5px;text-shadow:0 2px 0 #fff,0 0 20px #fff,0 0 20px #fff}
+  h1{font-family:"Dancing Script";font-weight:700;font-size:88px;line-height:1.02;letter-spacing:2px;color:#5c79a8;text-shadow:0 4px 0 #fff,0 0 24px #fff;margin-top:10px}
+  .rib{display:inline-block;margin-top:34px;background:#f1dcc0;color:#9a6c47;padding:14px 56px;font-family:"Fredoka";font-size:38px;border-radius:6px}
+  .datos{position:absolute;left:0;right:0;top:700px;text-align:center;font-family:"Quicksand";font-weight:700;font-size:38px;color:#4a4f63;line-height:1.55;text-shadow:0 1px 0 #fff,0 0 16px #fff,0 0 16px #fff}
+  .datos .chico{font-size:31px;color:#7a8095}
+</style>
+</head>
+<body>
+<div id="card">
+  <div id="art"></div>
+  <div class="txt">
+    <div class="pre">Te invito a celebrar mi 1 añito</div>
+    <h1>HIRAM EZEQUIEL</h1>
+    <div class="rib">Sábado 10 de octubre</div>
+  </div>
+  <div class="datos">
+    De 15:00 a 18:00 hs<br>
+    Aso de Empleados AJ Vierci<br>
+    <span class="chico">Luque</span>
+  </div>
+</div>
+<script src="art.js"></script>
+<script>
+const A = ART;
+const olas = y => { const t = "t50 0 ".repeat(23);
+  return `<path d="M-20 ${y} q25 -18 50 0 ${t}V1350 H-20Z" fill="#b9d6f0"/>
+    <path d="M-40 ${y + 22} q25 -16 50 0 ${t}V1350 H-40Z" fill="#9cc3e6" opacity=".85"/>`; };
+document.getElementById("art").innerHTML =
+`<svg viewBox="0 0 1080 1350" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#dcebf8"/><stop offset=".62" stop-color="#eef4f6"/><stop offset="1" stop-color="#fdf8f1"/></linearGradient></defs>
+  <rect width="1080" height="1350" fill="url(#sky3)"/>
+  ${A.star(150, 140)}${A.star(930, 175, .95)}${A.star(860, 90, .7, "#b9d6f0")}${A.star(230, 235, .6, "#b9d6f0")}
+  ${A.rainbow(540, 620, 400, 34)}
+  ${A.cloud(120, 600, 2.2)}${A.cloud(960, 600, 2.2)}
+  ${A.balloon(96, 285, "#b9d6f0", 1.8)}${A.balloon(190, 205, "#f9d8a8", 1.6)}
+  ${A.dove(940, 245, 1.9)}
+  ${A.cloud(190, 940, 1.8)}${A.cloud(895, 960, 1.8)}
+  ${olas(1110)}
+  ${A.ark(540, 1060, 1.4)}
+  ${olas(1185)}
+</svg>`;
+document.fonts.ready.then(() => document.body.setAttribute("data-listo", "1"));
+</script>
+</body>
+</html>
