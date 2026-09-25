@@ -7,7 +7,7 @@
 <title>Lista de invitados · Organizador</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=20260924a">
 <style>
   .top{background:linear-gradient(135deg,#8fb0dc,#7f9cc9);color:#fff;padding:22px 18px 18px;border-radius:0 0 26px 26px}
   .top h1{font-size:22px;font-weight:600}.top p{opacity:.9;font-size:14px}
@@ -35,8 +35,8 @@
 <body>
 <div class="wrap" id="app"></div>
 
-<script src="config.js"></script>
-<script src="api.js"></script>
+<script src="config.js?v=20260924a"></script>
+<script src="api.js?v=20260924a"></script>
 <script>
 const C = window.CUMPLE, $ = s => document.querySelector(s), app = $("#app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -87,6 +87,7 @@ function render() {
           <div><label class="lbl">Teléfono (opcional)</label><input type="tel" id="gt" placeholder="0981…"></div>
           <div><label class="lbl">Acompañantes</label><input type="number" id="ga" min="0" max="20" value="0" required></div>
         </div>
+        <div id="aviso"></div>
         <button class="btn-sm" id="sv">Guardar</button>
         <button type="button" class="link" id="cx" hidden>Cancelar edición</button>
       </form>
@@ -116,11 +117,16 @@ function render() {
     <button class="link" id="out">Salir</button></div>`;
 
   $("#af").onsubmit = async e => {
-    e.preventDefault(); $("#sv").disabled = true;
+    e.preventDefault();
+    const esNuevo = !$("#gid").value;
+    $("#sv").disabled = true; $("#sv").textContent = "Guardando…"; $("#aviso").innerHTML = "";
     try {
       await API.guardar(clave, { id: $("#gid").value, nombre: $("#gn").value.trim().replace(/\s+/g, " "), acompanantes: Math.max(0, +$("#ga").value || 0), telefono: $("#gt").value.trim() });
       await cargar();
-    } catch (err) { alert(err.message); $("#sv").disabled = false; }
+    } catch (err) {
+      $("#sv").disabled = false; $("#sv").textContent = "Guardar";
+      $("#aviso").innerHTML = `<div class="msg err">${esc(err.message)}${esNuevo ? " Si lo volvés a intentar, fijate primero que no haya quedado cargado en la lista de abajo." : " Podés tocar Guardar de nuevo."}</div>`;
+    }
   };
   $("#bk").onclick = async () => {
     const rows = $("#bulk").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => {
@@ -130,10 +136,10 @@ function render() {
     if (!rows.length) return;
     $("#bk").disabled = true; $("#bk").textContent = "Guardando…";
     try { for (const r of rows) await API.guardar(clave, r); await cargar(); }
-    catch (err) { alert(err.message); await cargar(); }
+    catch (err) { alert(err.message); try { await cargar(); } catch { } }
   };
   app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { filtro = b.dataset.f; render(); });
-  $("#rf").onclick = cargar;
+  $("#rf").onclick = () => cargar().catch(err => alert(err.message));
   $("#se").oninput = e => { texto = e.target.value; const p = e.target.selectionStart; render(); const s = $("#se"); s.focus(); s.setSelectionRange(p, p); };
   app.querySelectorAll("[data-e]").forEach(b => b.onclick = () => {
     const g = lista.find(x => x.id === b.dataset.e);
@@ -147,7 +153,8 @@ function render() {
   app.querySelectorAll("[data-d]").forEach(b => b.onclick = async () => {
     const g = lista.find(x => x.id === b.dataset.d);
     if (!confirm(`¿Borrar a ${g.nombre} de la lista?`)) return;
-    await API.borrar(clave, g.id); cargar();
+    b.disabled = true;
+    try { await API.borrar(clave, g.id); await cargar(); } catch (err) { b.disabled = false; alert(err.message); }
   });
   $("#csv").onclick = () => {
     const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;

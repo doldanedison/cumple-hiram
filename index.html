@@ -25,7 +25,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Fredoka:wght@400;500;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=20260924a">
 </head>
 <body>
 
@@ -88,9 +88,9 @@
   <div id="sheetBody"></div>
 </div>
 
-<script src="config.js"></script>
-<script src="art.js"></script>
-<script src="api.js"></script>
+<script src="config.js?v=20260924a"></script>
+<script src="art.js?v=20260924a"></script>
+<script src="api.js?v=20260924a"></script>
 <script>
 const C = window.CUMPLE, $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -282,7 +282,8 @@ function stepConfirmar(g) {
       stepListo(g, cant);
     } catch (e) {
       btn.disabled = false; btn.innerHTML = t;
-      body.insertAdjacentHTML("afterbegin", `<div class="msg err">No se pudo guardar. Intentá de nuevo.</div>`);
+      body.querySelectorAll(".msg.err").forEach(x => x.remove());
+      body.insertAdjacentHTML("afterbegin", `<div class="msg err">${esc(e.message)}</div>`);
     }
   };
   $("#ok").onclick = e => send(max > 1 ? n : 1, e.currentTarget);

@@ -7,12 +7,30 @@ window.API = (function () {
   const norm = s => (s || "").toString().normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase().replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
 
-  async function call(params) {
+  // La planilla de Google tarda 1-3 segundos en responder; con señal floja el
+  // pedido se corta. Reintentamos los pedidos que se pueden repetir sin riesgo.
+  const ESPERA = 20000, INTENTOS = 3;
+  const errServidor = m => Object.assign(new Error(m), { servidor: true });
+
+  async function call(params, reintentar = true) {
     const q = new URLSearchParams(params).toString();
-    const r = await fetch(url() + "?" + q, { method: "GET", redirect: "follow" });
-    const j = await r.json();
-    if (!j.ok) throw new Error(j.error || "Error del servidor");
-    return j;
+    for (let i = 1; ; i++) {
+      const ctrl = new AbortController();
+      const reloj = setTimeout(() => ctrl.abort(), ESPERA);
+      try {
+        const r = await fetch(url() + "?" + q, { method: "GET", redirect: "follow", signal: ctrl.signal });
+        const txt = await r.text();
+        let j;
+        try { j = JSON.parse(txt); } catch { throw new Error("respuesta no válida"); }
+        if (!j.ok) throw errServidor(j.error || "Error del servidor");
+        return j;
+      } catch (e) {
+        if (e.servidor) throw e;                       // clave incorrecta, invitado inexistente…
+        if (!reintentar || i >= INTENTOS)
+          throw new Error("No pudimos conectar con la lista. Revisá tu conexión a internet y probá de nuevo.");
+      } finally { clearTimeout(reloj); }
+      await new Promise(r => setTimeout(r, 700 * i));
+    }
   }
 
   // ---- modo demo ----
@@ -44,7 +62,7 @@ window.API = (function () {
       return load();
     },
     async guardar(clave, inv) {
-      if (!demo()) return call({ action: "guardar", clave, id: inv.id || "", nombre: inv.nombre, acompanantes: inv.acompanantes, telefono: inv.telefono || "" });
+      if (!demo()) return call({ action: "guardar", clave, id: inv.id || "", nombre: inv.nombre, acompanantes: inv.acompanantes, telefono: inv.telefono || "" }, !!inv.id);
       const l = load();
       if (inv.id) Object.assign(l.find(x => x.id === inv.id), { nombre: inv.nombre, acompanantes: +inv.acompanantes, telefono: inv.telefono || "" });
       else l.push({ id: Date.now().toString(36), nombre: inv.nombre, acompanantes: +inv.acompanantes, telefono: inv.telefono || "", asistiran: 0, estado: "PENDIENTE", mensaje: "", actualizado: "" });
