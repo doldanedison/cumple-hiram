@@ -121,7 +121,9 @@ window.API = (function () {
           const g = l[m.i]; return { id: g.id, nombre: g.nombre, acompanantes: g.acompanantes, asistiran: g.asistiran, estado: g.estado, exacto: m.exacto };
         });
       }
-      const j = await call({ action: "buscar", nombre, flex: 1 });
+      let j;
+      try { j = await call({ action: "buscar", nombre, flex: 1 }); }
+      catch (e) { if (!(e.servidor && /apellido/.test(e.message))) throw e; j = { flex: false }; }  // servidor viejo pide 2 palabras
       if (j.flex) return j.invitados;
       // Servidor viejo (solo palabras exactas, mínimo 2): buscamos palabra por palabra y juntamos.
       const qs = norm(nombre).split(" ").filter(Boolean);
