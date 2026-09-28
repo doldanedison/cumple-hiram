@@ -13,7 +13,7 @@ function doGet(e) {
   const p = e.parameter || {};
   try {
     switch (p.action) {
-      case "buscar": return out({ ok: true, invitados: buscar(p.nombre) });
+      case "buscar": return out({ ok: true, flex: !!p.flex, invitados: buscar(p.nombre, p.flex) });
       case "confirmar": return out(confirmar(p.id, p.asistiran, p.mensaje));
       case "listar": auth(p); return out({ ok: true, invitados: leer().map(r => r.obj) });
       case "guardar": auth(p); return out(guardar(p));
@@ -57,13 +57,98 @@ function norm(s) {
     .replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function buscar(nombre) {
+function buscar(nombre, flex) {
+  const todos = leer();
+  if (flex) {
+    // búsqueda tolerante: errores de tipeo, acentos, "Giulianna" = "Juliana", solo el nombre, etc.
+    const r = bqBuscar(nombre, todos.map(x => x.obj.nombre));
+    if (!bqNorm(nombre)) throw new Error("Escribí tu nombre");
+    return r.slice(0, 8).map(m => {
+      const o = todos[m.i].obj;
+      return { id: o.id, nombre: o.nombre, acompanantes: o.acompanantes, asistiran: o.asistiran, estado: o.estado, exacto: m.exacto };
+    });
+  }
   const b = norm(nombre).split(" ").filter(Boolean);
-  if (!b.length) throw new Error("Escribí tu nombre");
-  return leer().filter(r => { const a = norm(r.obj.nombre).split(" "); return b.every(x => a.indexOf(x) >= 0); })
+  if (b.length < 2) throw new Error("Escribí nombre y apellido");
+  return todos.filter(r => { const a = norm(r.obj.nombre).split(" "); return b.every(x => a.indexOf(x) >= 0); })
     .slice(0, 5)
     .map(r => ({ id: r.obj.id, nombre: r.obj.nombre, acompanantes: r.obj.acompanantes, asistiran: r.obj.asistiran, estado: r.obj.estado }));
 }
+
+// ==== BUSQUEDA APROXIMADA (identica en api.js y Code.gs) ====
+function bqNorm(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
+}
+// clave fonetica del castellano: "Giulianna" y "Juliana" dan la misma clave
+function bqFon(w) {
+  w = bqNorm(w).replace(/ñ/g, "n").replace(/[^a-z]/g, "");
+  w = w.replace(/ph/g, "f").replace(/ch/g, "x").replace(/sh/g, "x").replace(/ll/g, "j")
+    .replace(/qu/g, "k").replace(/gu([ei])/g, "G$1").replace(/g([ei])/g, "j$1").replace(/G/g, "g")
+    .replace(/c([ei])/g, "s$1").replace(/z/g, "s").replace(/[cq]/g, "k")
+    .replace(/v/g, "b").replace(/w/g, "u").replace(/h/g, "")
+    .replace(/y(?=[aeiou])/g, "j").replace(/y/g, "i")
+    .replace(/j[iy]([aeiou])/g, "j$1")
+    .replace(/(.)\1+/g, "$1");
+  return w;
+}
+function bqDist(a, b) {
+  if (a === b) return 0;
+  var m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  var prev = [], cur = [], i, j;
+  for (j = 0; j <= n; j++) prev[j] = j;
+  for (i = 1; i <= m; i++) {
+    cur[0] = i;
+    for (j = 1; j <= n; j++) {
+      var c = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + c);
+      if (i > 1 && j > 1 && a.charAt(i - 1) === b.charAt(j - 2) && a.charAt(i - 2) === b.charAt(j - 1))
+        cur[j] = Math.min(cur[j], prev[j - 2] + 1);
+    }
+    var t = prev; prev = cur; cur = t;
+  }
+  return prev[n];
+}
+// parecido entre dos palabras: 1 = igual, 0 = nada que ver
+function bqPalabra(q, p) {
+  if (q === p) return 1;
+  if (q.length >= 3 && p.length >= 3 && (p.indexOf(q) === 0 || q.indexOf(p) === 0)) return 0.9;
+  var fq = bqFon(q), fp = bqFon(p);
+  if (fq && fq === fp) return 0.92;
+  if (q.length < 4 || p.length < 4) return 0;
+  var d = bqDist(fq, fp), mx = Math.max(fq.length, fp.length);
+  var s = 1 - d / mx;
+  // tolerancia: 1 letra en palabras cortas, 2 en largas
+  return (d <= (mx >= 7 ? 2 : 1) && s >= 0.6) ? Math.min(0.85, s) : 0;
+}
+// devuelve [{i, puntos, exacto}] ordenado de mejor a peor
+function bqBuscar(consulta, nombres) {
+  var qs = bqNorm(consulta).split(" ").filter(Boolean);
+  if (!qs.length) return [];
+  var res = [];
+  nombres.forEach(function (nom, i) {
+    var ps = bqNorm(nom).split(" ").filter(Boolean);
+    if (!ps.length) return;
+    var total = 0, exactas = 0, hit = 0;
+    qs.forEach(function (q) {
+      var mejor = 0;
+      ps.forEach(function (p) { var s = bqPalabra(q, p); if (s > mejor) mejor = s; });
+      if (mejor > 0) { hit++; total += mejor; }
+      if (mejor === 1) exactas++;
+    });
+    if (!hit) return;
+    // cobertura del nombre de la lista (para preferir "Hebert" a "Christian Veron" al buscar "Hebert Veron")
+    var cob = hit / Math.max(ps.length, 1);
+    var puntos = total / qs.length * 0.65 + cob * 0.35;
+    // exacto: todo lo que escribió está tal cual en el nombre de la lista
+    var exacto = exactas === qs.length;
+    res.push({ i: i, puntos: puntos, exacto: exacto });
+  });
+  res.sort(function (a, b) { return b.puntos - a.puntos; });
+  return res;
+}
+// ==== FIN ====
 
 function conLock(fn) {
   const lock = LockService.getScriptLock(); lock.waitLock(15000);

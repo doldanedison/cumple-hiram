@@ -25,7 +25,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Fredoka:wght@400;500;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260924a">
+<link rel="stylesheet" href="styles.css?v=20260928a">
 </head>
 <body>
 
@@ -88,9 +88,9 @@
   <div id="sheetBody"></div>
 </div>
 
-<script src="config.js?v=20260924a"></script>
-<script src="art.js?v=20260924a"></script>
-<script src="api.js?v=20260924a"></script>
+<script src="config.js?v=20260928a"></script>
+<script src="art.js?v=20260928a"></script>
+<script src="api.js?v=20260928a"></script>
 <script>
 const C = window.CUMPLE, $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -183,34 +183,13 @@ const close = () => { $("#bg").classList.remove("on"); $("#sheet").classList.rem
 $("#bg").onclick = close;
 $("#rsvpBtn").onclick = () => { stepBuscar(); open(); };
 
-// Busca por cada palabra por separado y junta los resultados, para que
-// "Hebert Veron" encuentre a "Hebert" aunque en la lista no esté el apellido.
-// (El backend exige 2 palabras y las combina con Y, por eso se manda duplicada.)
-async function buscarCoincidencias(q) {
-  const todas = API.norm(q).split(" ").filter(Boolean);
-  const largas = todas.filter(t => t.length >= 3);
-  const palabras = [...new Set(largas.length ? largas : todas)].slice(0, 4);
-  const listas = await Promise.all(palabras.map(t => API.buscar(t + " " + t).catch(() => [])));
-  const puntos = new Map();
-  listas.forEach(lista => lista.forEach(g => {
-    const p = puntos.get(g.id);
-    if (p) p.n++; else puntos.set(g.id, { g, n: 1 });
-  }));
-  // primero los que más palabras coinciden y, a igualdad, el nombre más parecido
-  // ("Hebert" antes que "Christian Verón" cuando se busca "Hebert Verón")
-  const prop = g => puntos.get(g.id).n / API.norm(g.nombre).split(" ").filter(Boolean).length;
-  return [...puntos.values()]
-    .sort((a, b) => b.n - a.n || prop(b.g) - prop(a.g) || a.g.nombre.localeCompare(b.g.nombre))
-    .slice(0, 8).map(x => x.g);
-}
-
 function stepBuscar(msg) {
   body.innerHTML = `
     <h2>Confirmar asistencia</h2>
     <p class="sub">Escribí tu nombre tal como te conoce la familia</p>
     <form id="f">
       <label class="lbl" for="q">Tu nombre</label>
-      <input type="text" id="q" autocomplete="name" placeholder="Ej.: María o María González" required minlength="3">
+      <input type="text" id="q" autocomplete="name" placeholder="Ej.: María o María González" autocapitalize="words" autocorrect="off" required minlength="3">
       ${msg || ""}
       <button class="btn btn-rsvp" style="width:100%;margin:16px 0 0" id="go">Buscar mi invitación</button>
     </form>
@@ -225,16 +204,17 @@ function stepBuscar(msg) {
     }
     $("#go").innerHTML = '<span class="spin"></span> Buscando…'; $("#go").disabled = true;
     try {
-      const r = await buscarCoincidencias(q);
-      if (!r.length) return stepBuscar(`<div class="msg err">No encontramos <b>${esc(q)}</b> en la lista de invitados. Revisá cómo lo escribiste o consultá con la familia de ${esc(C.nombre.split(" ")[0])} 💙</div>`);
-      if (r.length === 1) return stepConfirmar(r[0]);
-      body.innerHTML = `<h2>¿Cuál sos vos?</h2><p class="sub">Tocá tu nombre en la lista</p>
+      const r = await API.buscar(q);
+      if (!r.length) return stepBuscar(`<div class="msg err">No encontramos <b>${esc(q)}</b> en la lista. Probá escribiendo <b>solo tu nombre</b> (o solo tu apellido), sin acentos si querés. Si sigue sin aparecer, escribile a la familia de ${esc(C.nombre.split(" ")[0])} 💙</div>`);
+      if (r.length === 1 && r[0].exacto) return stepConfirmar(r[0]);
+      const seguro = r.length === 1 ? "¿Sos vos?" : "¿Cuál sos vos?";
+      body.innerHTML = `<h2>${seguro}</h2><p class="sub">${r.length === 1 ? "Encontramos un nombre parecido. Tocalo si sos vos" : "Tocá tu nombre en la lista"}</p>
         ${r.map((g, i) => `<button class="pick" data-i="${i}">${esc(g.nombre)}<small style="display:block;color:var(--soft);font-size:13px">${+g.acompanantes + 1} ${+g.acompanantes ? "lugares" : "lugar"}</small></button>`).join("")}
-        <button class="link" id="bk">Volver</button>`;
+        <button class="link" id="bk">No soy yo · buscar de nuevo</button>`;
       body.querySelectorAll(".pick").forEach(b => b.onclick = () => stepConfirmar(r[+b.dataset.i]));
       $("#bk").onclick = () => stepBuscar();
     } catch (err) {
-      stepBuscar(`<div class="msg err">No pudimos conectar. Probá de nuevo en un momento.</div>`);
+      stepBuscar(`<div class="msg err">${esc(err.message)}</div>`);
     }
   };
 }
