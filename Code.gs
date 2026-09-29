@@ -81,9 +81,9 @@ function bqNorm(s) {
     .replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
 }
 // clave fonetica del castellano: "Giulianna" y "Juliana" dan la misma clave
-function bqFon(w) {
+function bqFon(w, alt) {
   w = bqNorm(w).replace(/ñ/g, "n").replace(/[^a-z]/g, "");
-  w = w.replace(/ph/g, "f").replace(/ch/g, "x").replace(/sh/g, "x").replace(/ll/g, "j")
+  w = w.replace(/ph/g, "f").replace(/ch/g, "x").replace(/sh/g, "x").replace(/ll/g, alt ? "l" : "j")
     .replace(/qu/g, "k").replace(/gu([ei])/g, "G$1").replace(/g([ei])/g, "j$1").replace(/G/g, "g")
     .replace(/c([ei])/g, "s$1").replace(/z/g, "s").replace(/[cq]/g, "k")
     .replace(/v/g, "b").replace(/w/g, "u").replace(/h/g, "")
@@ -118,6 +118,12 @@ function bqPalabra(q, p) {
   if (fq && fq === fp) return 0.92;
   if (q.length < 4 || p.length < 4) return 0;
   var d = bqDist(fq, fp), mx = Math.max(fq.length, fp.length);
+  // segunda lectura: "ll" como "l" ("Gulliana" ~ "Giuliana")
+  var aq = bqFon(q, true), ap = bqFon(p, true);
+  if (aq !== fq || ap !== fp) {
+    var d2 = bqDist(aq, ap), mx2 = Math.max(aq.length, ap.length);
+    if (d2 / mx2 < d / mx) { d = d2; mx = mx2; }
+  }
   var s = 1 - d / mx;
   // tolerancia: 1 letra en palabras cortas, 2 en largas
   return (d <= (mx >= 7 ? 2 : 1) && s >= 0.6) ? Math.min(0.85, s) : 0;
